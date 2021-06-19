@@ -907,7 +907,6 @@ public class Main extends AbstractGame
     if(Input.IsKeyDown(KeyEvent.VK_S))
     {
       ChangeState(STATS);
-      return;
     }
   }
 
@@ -917,7 +916,6 @@ public class Main extends AbstractGame
     {
       ChangeState(MENU);
       SetUpGame();
-      return;
     }
   }
 
