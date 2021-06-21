@@ -19,13 +19,10 @@ import java.awt.Rectangle;
 
 public class Main extends AbstractGame
 {
-  //Required Basic Game Functional Data
-  private static GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-
-  private static int screenWidth = 800;
-  private static int screenHeight = 480;
-  //private static int screenWidth = device.getDisplayMode().getWidth() / 3;
-  //private static int screenHeight = device.getDisplayMode().getHeight() / 3;
+  private static final int screenWidth = 800;
+  private static final int screenHeight = 480;
+  // private static int screenWidth = device.getDisplayMode().getWidth() / 3;
+  // private static int screenHeight = device.getDisplayMode().getHeight() / 3;
   private static int windowWidth;
   private static int windowHeight;
 
@@ -44,8 +41,8 @@ public class Main extends AbstractGame
   private static final int STATS = 6;
 
   //Required Basic Game Visual data used in main below
-  private static String gameName = "Just Another Day";
-  private static int fps = 60;
+  private static final String gameName = "Just Another Day";
+  private static final int fps = 60;
 
   //Store and set the initial game state, typically MENU to start
   private int gameState = MENU;
@@ -61,15 +58,6 @@ public class Main extends AbstractGame
   int COFFEE = 4;
   int PIZZA = 5;
   int WATER = 6;
-
-  // Create font for the timer on screen and statistics
-  Font hudFont = new Font("Arial", Font.BOLD + Font.ITALIC, 40);
-  Font statsFont = new Font("Arial", Font.BOLD + Font.ITALIC, 30);
-
-  // Create Vector2F positions for the text during play
-  Vector2F secondClockLoc = new Vector2F(0, 40);
-  Vector2F scoreHeader = new Vector2F(550, 40);
-
 
   //store the amount of time the repeating timer will take before resetting
   final int REPEAT_TIME = 1500;
@@ -104,29 +92,15 @@ public class Main extends AbstractGame
   // Variable to increase speed of obstacles every 30 sec
   final float INCREASE_TIME = 30000; // ms
   float increaseTimeLeft = INCREASE_TIME;
+  float scrollScreenTimeLeft = INCREASE_TIME;
 
   // Point awarded every second to the score
   final float AWARD_POINT = 1000; // ms
   float awardTimeLeft = AWARD_POINT;
 
-  // Chance variables for the random number generators
-  float chance;
-  float chance1;
-
-  // Mosquito obstacle array
-  SpriteSheet[] mosquitos = new SpriteSheet[MAX_OBSTACLE];
-  Vector2F[] mosquitoPos = new Vector2F[MAX_OBSTACLE];
-  float mosquitoSpeed = 4.5f;
-
-  // Laundry obstacle array
-  SpriteSheet[] laundry = new SpriteSheet[MAX_OBSTACLE];
-  Vector2F[] laundryPos = new Vector2F[MAX_OBSTACLE];
-  float laundrySpeed = 4.2f;
-
-  // Toys obstacle array
-  SpriteSheet[] toys = new SpriteSheet[MAX_OBSTACLE];
-  Vector2F[] toysPos = new Vector2F[MAX_OBSTACLE];
-  float toysSpeed = 4.2f;
+  // Punch duration
+  final float PUNCH_TIMER = 300;
+  float repeatPunching = 0;
 
   // Variables for the different player states
   final int RUN = 0;
@@ -137,9 +111,36 @@ public class Main extends AbstractGame
   final float GRAVITY = 9f / fps;
 
   // Scroll screen variable direction
-  final int LEFT = 1;
   final int RIGHT = -1;
   final int STOP = 0;
+
+  // Create font for the timer on screen and statistics
+  Font hudFont = new Font("Arial", Font.BOLD + Font.ITALIC, 40);
+  Font statsFont = new Font("Arial", Font.BOLD + Font.ITALIC, 30);
+  Font scoreFont = new Font("Arial", Font.BOLD + Font.ITALIC, 30);
+
+  // Create Vector2F positions for the text during play
+  Vector2F secondClockLoc = new Vector2F(0, 40);
+  Vector2F scoreHeader = new Vector2F(550, 40);
+
+  // Chance variables for the random number generators
+  float chance;
+  float chance1;
+
+  // Obstacle/ power-ups speed
+  float speed = 4.5f;
+
+  // Mosquito obstacle array
+  SpriteSheet[] mosquitos = new SpriteSheet[MAX_OBSTACLE];
+  Vector2F[] mosquitoPos = new Vector2F[MAX_OBSTACLE];
+
+  // Laundry obstacle array
+  SpriteSheet[] laundry = new SpriteSheet[MAX_OBSTACLE];
+  Vector2F[] laundryPos = new Vector2F[MAX_OBSTACLE];
+
+  // Toys obstacle array
+  SpriteSheet[] toys = new SpriteSheet[MAX_OBSTACLE];
+  Vector2F[] toysPos = new Vector2F[MAX_OBSTACLE];
 
   // Create SpriteSheet array for character actions/movements
   SpriteSheet[] playerImg = new SpriteSheet[3];
@@ -153,7 +154,7 @@ public class Main extends AbstractGame
   // Forces variable position
   Vector2F forces = new Vector2F(0, GRAVITY);
 
-  // Jumpspeed value
+  // Jump speed value
   float jumpSpeed = -6.5f;
 
   // Boolean to check whether character is grounded
@@ -162,25 +163,17 @@ public class Main extends AbstractGame
   // Current playerState
   int playerState = RUN;
 
-  // Sprite sheets for the different states of player
-  SpriteSheet runImg;
-  SpriteSheet jumpImg;
-  SpriteSheet punchImg;
-
   // Spritesheets for coffee power up
   SpriteSheet[] coffee = new SpriteSheet[MAX_OBSTACLE];
   Vector2F[] coffeePos = new Vector2F[MAX_OBSTACLE];
-  float coffeeSpeed = 4.2f;
 
   // Spritesheets for pizza power down
   SpriteSheet[] pizza = new SpriteSheet[MAX_OBSTACLE];
   Vector2F[] pizzaPos = new Vector2F[MAX_OBSTACLE];
-  float pizzaSpeed = 4.2f;
 
   // Spritesheets for water power up
   SpriteSheet[] water = new SpriteSheet[MAX_OBSTACLE];
   Vector2F[] waterPos = new Vector2F[MAX_OBSTACLE];
-  float waterSpeed = 4.2f;
 
   // Spritesheet for the rolling pin (weapon)
   SpriteSheet[] rollingPins = new SpriteSheet[MAX_ROLLPIN];
@@ -210,9 +203,6 @@ public class Main extends AbstractGame
   // Game over screen
   SpriteSheet gameOver;
 
-  // Endgame screen
-  SpriteSheet endGame;
-
   // Pause screen game
   SpriteSheet pause;
 
@@ -225,8 +215,9 @@ public class Main extends AbstractGame
   // Variable for background scroll speed
   float scrollSpeed = 4f;
 
-  // Userscore variable tracks points collected by player
+  // User score variable tracks points collected by player
   int score = 0;
+  int highScore = 0;
 
   // User has three hearts, this variable tracks them
   int health = 3;
@@ -246,9 +237,6 @@ public class Main extends AbstractGame
 
   public static void main(String[] args)
   {
-    /***********************************************************************
-     DO NOT TOUCH THIS SECTION
-     ***********************************************************************/
     windowWidth = screenWidth;
     windowHeight = screenHeight - TITLE_BAR_HEIGHT;
 
@@ -258,8 +246,6 @@ public class Main extends AbstractGame
 
   public void LoadContent(GameContainer gc)
   {
-    //TODO: This subprogram automatically happens only once, just before the actual game loop starts.
-
     // Load two backgrounds for scrolling background
     bg1 = new SpriteSheet(LoadImage.FromFile("resources/images/backgrounds/Background.png"));
     bg2 = new SpriteSheet(LoadImage.FromFile("resources/images/backgrounds/Background.png"));
@@ -287,9 +273,6 @@ public class Main extends AbstractGame
     for (int i = 0; i < rollingPins.length; i++)
     {
       rollingPins[i] = new SpriteSheet(LoadImage.FromFile("resources/images/sprites/RollingPin.png"));
-      rollingPins[i].destRec = new Rectangle(0, 0, (int) (rollingPins[i].GetFrameWidth() * 0.2), (int) (rollingPins[i].GetFrameHeight() * 0.2));
-      rollingPins[i].SetVisible(false);
-      pinPos[i] = new Vector2F(rollingPins[i].destRec.x, rollingPins[i].destRec.y);
     }
 
     // Loop for loading mosquito obstacles
@@ -359,18 +342,27 @@ public class Main extends AbstractGame
     SetUpGame();
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Set up game for beggining of round, reset all variable speeds and positions
   private void SetUpGame()
   {
     System.out.println("Set up game");
-    // initialize starting variables
-    mosquitoSpeed = 4.5f;
-    laundrySpeed = 4.5f;
-    toysSpeed = 4.5f;
 
+    // Set obstacle speeds to original speed
+    speed = 4.5f;
+
+    // Reset scroll screen speed
+    scrollSpeed = 4f;
+
+    // Reset health and player score
     score = 0;
     health = 3;
+
+    // Reset clock timer to zero
     clockTimer = 0;
 
+    // Set all kill counts to 0
     mosquitoKillCount = 0;
     toyKillCount = 0;
     laundryKillCount = 0;
@@ -386,50 +378,98 @@ public class Main extends AbstractGame
     // Begin player running animation
     playerImg[RUN].StartAnimation();
 
+    // Mosquito obstacle
     for (int i = 0; i < mosquitos.length; i++)
     {
+      // Set a dest rec for mosquito obstacle
       mosquitos[i].destRec = new Rectangle(700, 150, (int) (mosquitos[i].GetFrameWidth() * 0.2), (int) (mosquitos[i].GetFrameHeight() * 0.2));
+
+      // Set mosquito obstacle to transparent
       mosquitos[i].SetVisible(false);
+
+      // Set mosquito position
       mosquitoPos[i] = new Vector2F(mosquitos[i].destRec.x, mosquitos[i].destRec.y);
     }
 
+    // Laundry obstacle setting up
     for (int i = 0; i < laundry.length; i++)
     {
+      // Set a dest rec for laundry obstacle
       laundry[i].destRec = new Rectangle(700, 250, (int) (laundry[i].GetFrameWidth() * 0.6), (int) (laundry[i].GetFrameHeight() * 0.6));
+
+      // Set laundry obstacle to transparent
       laundry[i].SetVisible(false);
+
+      // Set laundry position
       laundryPos[i] = new Vector2F(laundry[i].destRec.x, laundry[i].destRec.y);
     }
 
+    // Toy obstacle setting up
     for (int i = 0; i < toys.length; i++)
     {
+      // Set a dest rec for toys obstacle
       toys[i].destRec = new Rectangle(700, 320, (int) (toys[i].GetFrameWidth() * 0.15), (int) (toys[i].GetFrameHeight() * 0.15));
+
+      // Set toys obstacle to transparent
       toys[i].SetVisible(false);
+
+      // Set toy position
       toysPos[i] = new Vector2F(toys[i].destRec.x, toys[i].destRec.y);
     }
 
+    // Coffee power-up setting up
     for (int i = 0; i < coffee.length; i++)
     {
+      // Set a dest rec for coffee obstacle
       coffee[i].destRec = new Rectangle(700, 150, (int) (coffee[i].GetFrameWidth() * 0.3), (int) (coffee[i].GetFrameHeight() * 0.3));
+
+      // Set coffee power-up to transparent
       coffee[i].SetVisible(false);
+
+      // Set coffee position
       coffeePos[i] = new Vector2F(coffee[i].destRec.x, coffee[i].destRec.y);
     }
 
+    // Pizza power-down setting up
     for (int i = 0; i < pizza.length; i++)
     {
+      // Set a dest rec for pizza obstacle
       pizza[i].destRec = new Rectangle(700, 150, (int) (pizza[i].GetFrameWidth() * 0.3), (int) (pizza[i].GetFrameHeight() * 0.3));
+
+      // Set pizza power-down to transparent
       pizza[i].SetVisible(false);
+
+      // Set pizza position
       pizzaPos[i] = new Vector2F(pizza[i].destRec.x, pizza[i].destRec.y);
     }
 
+    // Water power-up setting up
     for (int i = 0; i < water.length; i++)
     {
+      // Set a dest rec for water power-ups
       water[i].destRec = new Rectangle(700, 150, (int) (water[i].GetFrameWidth() * 0.3), (int) (water[i].GetFrameHeight() * 0.3));
+
+      // Set water power-up to transparent
       water[i].SetVisible(false);
+
+      // Set water position
       waterPos[i] = new Vector2F(water[i].destRec.x, water[i].destRec.y);
     }
 
-    timerBarBase = new GameRectangle(windowWidth/4 - barWidth/2, 120, barWidth, 20,2, Helper.WHITE, Helper.DARK_GRAY, 0f);
-    timerBarCurrent = new GameRectangle(windowWidth/4 - barWidth/2, 120, barWidth, 20, 2, Helper.WHITE, Helper.BLUE, 0f);
+    // Loop for loading rolling pin weapons
+    for (int i = 0; i < rollingPins.length; i++)
+    {
+      // Set a dest rec for rolling pins
+      rollingPins[i].destRec = new Rectangle(0, 0, (int) (rollingPins[i].GetFrameWidth() * 0.2), (int) (rollingPins[i].GetFrameHeight() * 0.2));
+
+      // Set rolling pins position
+      rollingPins[i].SetVisible(false);
+      pinPos[i] = new Vector2F(rollingPins[i].destRec.x, rollingPins[i].destRec.y);
+    }
+
+    // Set up timer progress power-up bar
+    timerBarBase = new GameRectangle(20, 50, barWidth, 20,2, Helper.WHITE, Helper.DARK_GRAY, 0f);
+    timerBarCurrent = new GameRectangle(20, 50, barWidth, 20, 2, Helper.WHITE, Helper.BLUE, 0f);
   }
 
   public void Update(GameContainer gc, float deltaTime)
@@ -495,6 +535,29 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Method to make it easier to change states, takes in new state and changes it from old state
+  private void ChangeState(int newState)
+  {
+    // Print when states are changed
+    System.out.println("Change state from " + gameState + " to " + newState);
+
+    // If the new state is the same as old gamestate
+    if (newState == gameState)
+    {
+      // A warning message will be sent
+      System.out.println("Warning: state is already " + newState);
+      return;
+    }
+
+    // Change game state
+    gameState = newState;
+  }
+
+  //Pre: None
+  //Post: None
+  //Desc: Update menu, take in user input to change states
   private void UpdateMenu(GameContainer gc)
   {
     // Change gamestates based on user input
@@ -519,18 +582,12 @@ public class Main extends AbstractGame
     }
   }
 
-  private void ChangeState(int newState) {
-    System.out.println("Change state from " + gameState + " to " + newState);
-    if (newState == gameState)
-    {
-      System.out.println("Warning: state is already " + newState);
-      return;
-    }
-    gameState = newState;
-  }
-
+  //Pre: None
+  //Post: None
+  //Desc: Use user input to go from instructions to gameplay
   private void UpdateInstructions()
   {
+    // If user presses the enter key
     if (Input.IsKeyDown(KeyEvent.VK_ENTER))
     {
       // If user presses ENTER, the game begins
@@ -538,10 +595,13 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Update all gameplay, manage all interactions
   private void UpdateGamePlay(float deltaTime)
   {
     // Handle user input
-    HandleUserInput();
+    HandleUserInput(deltaTime);
 
     // Screen scrolls to the right
     xDir = RIGHT;
@@ -554,7 +614,7 @@ public class Main extends AbstractGame
     repeatingTimer = REPEAT_TIME;
 
     // Use method for scrolling screen
-    ScrollScreen(bg1, bg2, bg1Pos, bg2Pos, scrollSpeed);
+    ScrollScreen(bg1, bg2, bg1Pos, bg2Pos, deltaTime);
 
     // Translate the rolling pins using a for loop
     for (int i = 0; i < rollingPins.length; i++)
@@ -601,15 +661,14 @@ public class Main extends AbstractGame
     }
 
     // Move game obstacles
-    MoveObjects(mosquitos, mosquitoPos, mosquitoSpeed);
-    MoveObjects(laundry, laundryPos, laundrySpeed);
-    MoveObjects(toys, toysPos, toysSpeed);
+    MoveObjects(mosquitos, mosquitoPos, speed);
+    MoveObjects(laundry, laundryPos, speed);
+    MoveObjects(toys, toysPos, speed);
 
     // Deactivate game obstacles when they touch the edge of screen
     DeactivateObject(mosquitos);
     DeactivateObject(laundry);
     DeactivateObject(toys);
-
 
     //Add gravity to the player's y Speed (even if not jumping, to allow for falling)
     playerSpeed.y += forces.y;
@@ -630,7 +689,7 @@ public class Main extends AbstractGame
     // If the playerstate is run and player intersects it, one heart is lost
     if (playerState == RUN && activatedTimer <= 0)
     {
-      // Method which handles intersection and damage given
+      // Method which handles intersection and damage given (laundry/toys and player)
       ObjectsIntersect(laundry, RUN, laundryPos);
       ObjectsIntersect(toys, RUN, toysPos);
     }
@@ -638,80 +697,124 @@ public class Main extends AbstractGame
     // If the player state is jump and player jumps over laundry, one heart is lost
     if (playerState == JUMP && activatedTimer <= 0)
     {
-      // Method which handles intersection and damage given
+      // Method which handles intersection and damage given (laundry and player)
       ObjectsIntersect(laundry, JUMP, laundryPos);
+    }
+
+    // If player is punching and activated timer is less than or equal to zero
+    if (playerState == PUNCH && activatedTimer <= 0)
+    {
+      // Method which handles intersection and damage given (toys and player)
+      ObjectsIntersect(toys, PUNCH, toysPos);
     }
 
     // Reduce active ability timer if it is active
     if (activatedTimer > 0)
     {
+      // Subtract deltaTime from activated timer
       activatedTimer -= deltaTime;
     }
 
+    // For laundry array, handle intersection between player hit and laundry
     for (int i = 0; i < laundry.length; i++)
     {
+      // If laundry is visible
       if (laundry[i].GetVisible())
       {
+        // If the player is punching
         if (playerState == PUNCH)
         {
+          // If there is an intersection between punching player and laundry
           if (Helper.Intersects(laundry[i].destRec, playerImg[PUNCH].destRec))
           {
+            // Set laundry to transparent
             laundry[i].SetVisible(false);
-            score = score + 10;
+
+            // Increase the score by 10 pts
+            IncreaseBy(10);
+
+            // Reset position of laundry obstacle
             laundry[i].destRec.x = windowWidth;
             laundry[i].destRec.y = 270;
             laundryPos[i].x = laundry[i].destRec.x;
             laundryPos[i].y = laundry[i].destRec.y;
-            laundryKillCount = laundryKillCount + 1;
-            System.out.println("Laundry Kill Count = " + laundryKillCount);
+
+            // Add one point to kill count
+            laundryKillCount++;
           }
         }
       }
     }
 
-    for (int i = 0; i < rollingPins.length; i++)
+    // For array of rolling pin weapons
+    for (SpriteSheet rollingPin : rollingPins)
     {
-      if (rollingPins[i].GetVisible())
+      // If the rolling pin at i is visible
+      if (rollingPin.GetVisible())
       {
-        if (mosquitos[i].GetVisible())
+        // For array of mosquito obstacles
+        for (int j = 0; j < mosquitos.length; j++)
         {
-          if (Helper.Intersects(mosquitos[i].destRec, rollingPins[i].destRec))
+          // If mosquito is visible
+          if (mosquitos[j].GetVisible())
           {
-            mosquitos[i].SetVisible(false);
-            mosquitos[i].destRec.x = windowWidth;
-            mosquitos[i].destRec.y = (int) Helper.RandomValue(50, 150);
-            mosquitoPos[i].x = mosquitos[i].destRec.x;
-            mosquitoPos[i].y = mosquitos[i].destRec.y;
-            rollingPins[i].SetVisible(false);
-            score = score + 10;
-            mosquitoKillCount = mosquitoKillCount + 1;
-            System.out.println("Mosquito Kill Count = " + mosquitoKillCount);
-            System.out.println("Intersection occured");
+            // If an intersection occurs between the mosquito and rolling pin
+            if (Helper.Intersects(mosquitos[j].destRec, rollingPin.destRec))
+            {
+              // Set mosquito at j to transparent
+              mosquitos[j].SetVisible(false);
+
+              // Reset position of mosquito at j
+              mosquitos[j].destRec.x = windowWidth;
+              mosquitos[j].destRec.y = (int) Helper.RandomValue(50, 150);
+              mosquitoPos[j].x = mosquitos[j].destRec.x;
+              mosquitoPos[j].y = mosquitos[j].destRec.y;
+
+              // Set rolling pin at i to transparent
+              rollingPin.SetVisible(false);
+
+              // Increase total score by ten
+              IncreaseBy(10);
+
+              // Add one to the killCount
+              mosquitoKillCount++;
+            }
           }
         }
       }
     }
 
+    // If health is at zero
     if (health == 0)
     {
-      System.out.println("Health is zero, end game");
+      // Change state to endgame, the game is over
       ChangeState(ENDGAME);
     }
 
+    // Subtract deltaTime for faster obstacle spawning
     increaseTimeLeft = increaseTimeLeft - deltaTime;
+
+    // If increase timer is less than or equal to zero
     if (increaseTimeLeft <= 0)
     {
+      // Reset variable
       increaseTimeLeft = INCREASE_TIME;
-      toysSpeed = toysSpeed + 1;
-      laundrySpeed = laundrySpeed + 1;
-      mosquitoSpeed = mosquitoSpeed + 1;
+
+      // Increase all obstacle speeds by one
+      speed = speed + 1;
     }
 
+    // Reduce award time left by deltaTime
     awardTimeLeft = awardTimeLeft - deltaTime;
+
+    // If the award time left is less than or equal to zero
     if (awardTimeLeft <= 0)
     {
+      // Reset timer
       awardTimeLeft = AWARD_POINT;
-      score = score + 1;
+
+      // Increase score by one
+      IncreaseBy(1);
     }
 
     // decide whether we spawn a new obstacle
@@ -732,34 +835,46 @@ public class Main extends AbstractGame
     }
 
     // Move power-ups/power-downs
-    MoveObjects(coffee, coffeePos, coffeeSpeed);
-    MoveObjects(pizza, pizzaPos, pizzaSpeed);
-    MoveObjects(water, waterPos, waterSpeed);
+    MoveObjects(coffee, coffeePos, speed);
+    MoveObjects(pizza, pizzaPos, speed);
+    MoveObjects(water, waterPos, speed);
 
     // Deactivate objects when they touch the edge of the screen
     DeactivateObject(coffee);
     DeactivateObject(water);
     DeactivateObject(pizza);
 
+    // Coffee power-ups and player jump intersection
     for (int i = 0; i < coffee.length; i++)
     {
+      // If coffee at i is visible on screen
       if (coffee[i].GetVisible())
       {
+        // If player is jumping
         if (playerState == JUMP)
         {
+          // If intersection occurs between jumping player and coffee at i and activated timer is less than or equal to zero
           if (Helper.Intersects(coffee[i].destRec, playerImg[JUMP].destRec) && activatedTimer <= 0)
           {
+            // Set coffee object to visible
             coffee[i].SetVisible(false);
+
+            // Move objects to edge of screen
             coffee[i].destRec.x = windowWidth;
             coffee[i].destRec.y = (int) Helper.RandomValue(50, 150);
             coffeePos[i].x = coffee[i].destRec.x;
             coffeePos[i].y = coffee[i].destRec.y;
             powerUps = powerUps + 1;
 
-            ObjectsIntersectNoDamage(laundry, RUN, laundryPos);
-            ObjectsIntersectNoDamage(mosquitos, RUN, mosquitoPos);
-            ObjectsIntersectNoDamage(toys, RUN, toysPos);
+            // Call methods which give no damage when objects are intersected
+            ObjectsIntersectNoDamage(laundry, laundryPos);
+            ObjectsIntersectNoDamage(mosquitos, mosquitoPos);
+            ObjectsIntersectNoDamage(toys, toysPos);
+
+            // Reset activated timer
             activatedTimer = ACTIVE_TIME;
+
+            // Show the timer bar for user interface
             timerBarBase.SetTransparency(1f);
             timerBarCurrent.SetTransparency(1f);
           }
@@ -767,28 +882,39 @@ public class Main extends AbstractGame
       }
     }
 
+    // If activated timer is less than or equal to zero
     if (activatedTimer <= 0)
     {
+      // Set the bar transparency to 0
       timerBarBase.SetTransparency(0f);
       timerBarCurrent.SetTransparency(0f);
     }
 
+    // Change progress bar for invincibility power-up
     timerBarCurrent.SetWidth(activatedTimer/ACTIVE_TIME * barWidth);
 
+    // Handle pizza and jumping player intersection to lose 50 points
     for (int i = 0; i < pizza.length; i++)
     {
+      // If pizza object at i is visible
       if (pizza[i].GetVisible())
       {
+        // If player is jumping
         if (playerState == JUMP)
         {
-          // running backwards
+          // If pizza and jumping player intersects
           if (Helper.Intersects(pizza[i].destRec, playerImg[JUMP].destRec))
           {
+            // and score is greater than 50
             if (score > 50)
             {
-              score = score - 50;
+              // Take away 50 points
+              IncreaseBy(-50);
             }
+            // Set pizza visibility to false
             pizza[i].SetVisible(false);
+
+            // Move pizza to edge of screen
             pizza[i].destRec.x = windowWidth;
             pizza[i].destRec.y = (int) Helper.RandomValue(50, 150);
             pizzaPos[i].x = pizza[i].destRec.x;
@@ -798,20 +924,31 @@ public class Main extends AbstractGame
       }
     }
 
+    // Handle water and jumping player intersection to reset all hearts
     for (int i = 0; i < water.length; i++)
     {
+      // If water at i is visible
       if (water[i].GetVisible())
       {
+        // If the player is jumping
         if (playerState == JUMP)
         {
+          // If water power-up intersects with jumping player
           if (Helper.Intersects(water[i].destRec, playerImg[JUMP].destRec))
           {
+            // Set water at i to transparent
             water[i].SetVisible(false);
+
+            // Reset health to three hearts
             health = 3;
+
+            // Change position of water at i
             water[i].destRec.x = windowWidth;
             water[i].destRec.y = (int) Helper.RandomValue(50, 150);
             waterPos[i].x = water[i].destRec.x;
             waterPos[i].y = water[i].destRec.y;
+
+            // Increase power-ups counter by one for statistics
             powerUps = powerUps + 1;
           }
         }
@@ -819,7 +956,10 @@ public class Main extends AbstractGame
     }
   }
 
-  private void HandleUserInput()
+  //Pre: None
+  //Post: None
+  //Desc: Handle user input during gameplay, all player states (jumping, running, punching and throwing)
+  private void HandleUserInput(float deltaTime)
   {
     // Jump if the player hits space and is on the ground
     if (Input.IsKeyPressed(KeyEvent.VK_SPACE) && grounded)
@@ -840,13 +980,33 @@ public class Main extends AbstractGame
       return;
     }
     //Hold the H key to hit, release to return to RUN
-    if (Input.IsKeyPressed(KeyEvent.VK_H) && grounded)
+    if (Input.IsKeyPressed(KeyEvent.VK_H) && grounded && repeatPunching <= 0)
     {
       // Change player state to punch
       playerState = PUNCH;
 
       // Stop running animation
       playerImg[RUN].StopAnimation();
+
+      // Set timer to full time to begin the count down
+      repeatPunching = PUNCH_TIMER;
+    }
+
+    // If repeatPunching timer is greater than zero
+    if (repeatPunching > 0)
+    {
+      // Subtract deltaTime
+      repeatPunching -= deltaTime;
+
+      // If repeat punching is smaller then zero
+      if (repeatPunching < 0)
+      {
+        // Set player state to run
+        playerState = RUN;
+
+        // Start the run animation
+        playerImg[RUN].StartAnimation();
+      }
     }
 
     //Shoot a bullet on the space key if one is available
@@ -872,6 +1032,9 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Use user input to update pause state and change to new states
   private void UpdatePause()
   {
     // Change gamestates based on user input
@@ -895,6 +1058,9 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Update endgame state with user input and change states
   private void UpdateEndgame()
   {
     // Change gamestates based on user input
@@ -904,12 +1070,16 @@ public class Main extends AbstractGame
       SetUpGame();
       return;
     }
-    if(Input.IsKeyDown(KeyEvent.VK_S))
+    // If user presses "S", change game state to stats
+    if (Input.IsKeyDown(KeyEvent.VK_S))
     {
       ChangeState(STATS);
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Update statistics state to change to menu
   private void UpdateStats()
   {
     if (Input.IsKeyDown(KeyEvent.VK_M))
@@ -919,29 +1089,34 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw menu state and change animation
   private void DrawMenu(Graphics2D gfx)
   {
     // Draw intro sprite animation
     Draw.Sprite(gfx, intro);
 
     // If intro stops animating, show static menu screen
-    if (intro.IsAnimating())
-    {
-
-    }
-    else
+    if (!intro.IsAnimating())
     {
       // Draw menu screen
       Draw.Sprite(gfx, menuImg);
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw instructions game screen
   private void DrawInstructions(Graphics2D gfx)
   {
     // Draw game instructions
     Draw.Sprite(gfx, instructions);
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw all gameplay components including background, obstacles, player and power-ups
   private void DrawGamePlay(Graphics2D gfx)
   {
     // Draw both backgrounds for scrolling screen
@@ -950,8 +1125,6 @@ public class Main extends AbstractGame
 
     // Draw player at current player state
     Draw.Sprite(gfx, playerImg[playerState]);
-    SpriteSheet s = playerImg[playerState];
-    // Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.destRec.width, s.destRec.height, 3, Color.RED, 1f);
 
     // Based on health count, draw the hearts accordingly
     if (health == 3)
@@ -968,74 +1141,63 @@ public class Main extends AbstractGame
     }
 
     // Draw rolling pins for weapon
-    for (int i = 0; i < rollingPins.length; i++)
+    for (SpriteSheet rollingPin : rollingPins)
     {
-      Draw.Sprite(gfx, rollingPins[i]);
+      Draw.Sprite(gfx, rollingPin);
     }
 
     // Draw mosquitoes for obstacle
-    for (int i = 0; i < mosquitos.length; i++)
+    for (SpriteSheet mosquito : mosquitos)
     {
-      if (mosquitos[i].GetVisible())
+      if (mosquito.GetVisible())
       {
-        s = mosquitos[i];
         //Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.GetFrameWidth(), s.GetFrameHeight(), 3, Color.CYAN, 1f);
-        Draw.Sprite(gfx, mosquitos[i]);
+        Draw.Sprite(gfx, mosquito);
       }
     }
 
     // Draw laundry piles for obstacles
-    for (int i = 0; i < laundry.length; i++)
+    for (SpriteSheet spriteSheet : laundry)
     {
-      if (laundry[i].GetVisible())
+      if (spriteSheet.GetVisible())
       {
-        s = laundry[i];
-        //Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.destRec.width, s.destRec.height, 3, Color.ORANGE, 1f);
-        Draw.Sprite(gfx, laundry[i]);
+        Draw.Sprite(gfx, spriteSheet);
       }
     }
 
     // Draw toy piles for obstacles
-    for (int i = 0; i < toys.length; i++)
+    for (SpriteSheet toy : toys)
     {
-      if (toys[i].GetVisible())
+      if (toy.GetVisible())
       {
-        s = toys[i];
-        // Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.destRec.width, s.destRec.height, 3, Color.BLACK, 1f);
-        Draw.Sprite(gfx, toys[i]);
+        Draw.Sprite(gfx, toy);
       }
     }
 
     // Draw coffee cups for power-ups
-    for (int i = 0; i < coffee.length; i++)
+    for (SpriteSheet spriteSheet : coffee)
     {
-      if (coffee[i].GetVisible())
+      if (spriteSheet.GetVisible())
       {
-        s = coffee[i];
-        //Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.GetFrameWidth(), s.GetFrameHeight(), 3, Color.CYAN, 1f);
-        Draw.Sprite(gfx, coffee[i]);
+        Draw.Sprite(gfx, spriteSheet);
       }
     }
 
     // Draw pizza for power-downs
-    for (int i = 0; i < pizza.length; i++)
+    for (SpriteSheet spriteSheet : pizza)
     {
-      if (pizza[i].GetVisible())
+      if (spriteSheet.GetVisible())
       {
-        s = pizza[i];
-        //Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.destRec.width, s.destRec.height, 3, Color.ORANGE, 1f);
-        Draw.Sprite(gfx, pizza[i]);
+        Draw.Sprite(gfx, spriteSheet);
       }
     }
 
     // Draw water glasses for power-ups
-    for (int i = 0; i < water.length; i++)
+    for (SpriteSheet spriteSheet : water)
     {
-      if (water[i].GetVisible())
+      if (spriteSheet.GetVisible())
       {
-        s = water[i];
-        //Draw.Rect(gfx, s.destRec.x, s.destRec.y, s.destRec.width, s.destRec.height, 3, Color.BLACK, 1f);
-        Draw.Sprite(gfx, water[i]);
+        Draw.Sprite(gfx, spriteSheet);
       }
     }
 
@@ -1043,18 +1205,28 @@ public class Main extends AbstractGame
     Draw.Text(gfx, "Time: " + (int) (clockTimer / SECOND) + "s", secondClockLoc.x, secondClockLoc.y, hudFont, Helper.BLUE, 1f);
 
     // Display user score
-    Draw.Text(gfx, "Score: " + score, scoreHeader.x, scoreHeader.y, hudFont, Helper.BLUE, 1f);
+    Draw.Text(gfx, "Score: " + score, scoreHeader.x, scoreHeader.y, scoreFont, Helper.BLUE, 1f);
 
+    // Display session high score
+    Draw.Text(gfx, "High Score: " + highScore, scoreHeader.x, scoreHeader.y + 40, scoreFont, Helper.BLUE, 1f);
+
+    // Draw progress bar for invincibility power-up
     timerBarBase.Draw(gfx);
     timerBarCurrent.Draw(gfx);
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw pause game screen
   private void DrawPause(Graphics2D gfx)
   {
     // Draw pause game screen
     Draw.Sprite(gfx, pause);
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw endgame screen with final score
   private void DrawEndgame(Graphics2D gfx)
   {
     // Draw endgame screen with total score
@@ -1062,19 +1234,47 @@ public class Main extends AbstractGame
     Draw.Text(gfx, " " + score, scoreHeader.x - 220, scoreHeader.y + 205, hudFont, Helper.BLACK, 1f);
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Draw game statistics with all player data
   private void DrawStats(Graphics2D gfx)
   {
+    // Draw the statistics background
     Draw.Sprite(gfx, stats);
+
+    // Number of mosquitoes killed
     Draw.Text(gfx, " " + mosquitoKillCount, 500, 190, statsFont, Helper.BLACK, 1f);
+
+    // Number of laundry the player crashed
     Draw.Text(gfx, " " + laundryKillCount, 500, 260, statsFont, Helper.BLACK, 1f);
+
+    // Number of toy piles the player jumped over
     Draw.Text(gfx, " " + toyKillCount, 500, 340, statsFont, Helper.BLACK, 1f);
+
+    // Number of power-ups collected
     Draw.Text(gfx, " " + powerUps, 500, 410, statsFont, Helper.BLACK, 1f);
   }
 
-  private void ScrollScreen(SpriteSheet img1, SpriteSheet img2, Vector2F pos1, Vector2F pos2, float speed)
+  //Pre: None
+  //Post: None
+  //Desc: Manage screen scrolling for user interface and game graphics
+  private void ScrollScreen(SpriteSheet img1, SpriteSheet img2, Vector2F pos1, Vector2F pos2, float deltaTime)
   {
-    pos1.x = pos1.x + (xDir * speed);
-    pos2.x = pos2.x + (xDir * speed);
+    // Subtract deltaTime for faster obstacle spawning
+    scrollScreenTimeLeft = scrollScreenTimeLeft - deltaTime;
+
+    // If increase timer is less than or equal to zero
+    if (scrollScreenTimeLeft <= 0)
+    {
+      // Increase scroll speed by one
+      scrollSpeed = scrollSpeed + 0.5f;
+
+      // Reset variable
+      scrollScreenTimeLeft = INCREASE_TIME;
+    }
+
+    pos1.x = pos1.x + (xDir * scrollSpeed);
+    pos2.x = pos2.x + (xDir * scrollSpeed);
 
     if (pos1.x < -windowWidth)
     {
@@ -1097,17 +1297,9 @@ public class Main extends AbstractGame
     img2.destRec.x = (int) pos2.x;
   }
 
-  private void MoveGameObject(SpriteSheet object, Vector2F truePos, Vector2F speed)
-  {
-    //Add the speed components to the object's true position
-    truePos.x = truePos.x + speed.x;
-    truePos.y = truePos.y + speed.y;
-
-    //Set the object's drawn position to rounded down true position
-    object.destRec.x = (int) truePos.x;
-    object.destRec.y = (int) truePos.y;
-  }
-
+  //Pre: None
+  //Post: None
+  //Desc: Move game objects suign the true position and speed
   private void MoveGameObjects(SpriteSheet[] objects, Vector2F truePos, Vector2F speed)
   {
     //Add the speed components to the object's true position
@@ -1115,13 +1307,16 @@ public class Main extends AbstractGame
     truePos.y = truePos.y + speed.y;
 
     //Set all of the object's drawn positions to rounded down true position
-    for (int i = 0; i < objects.length; i++)
+    for (SpriteSheet object : objects)
     {
-      objects[i].destRec.x = (int) truePos.x;
-      objects[i].destRec.y = (int) truePos.y;
+      object.destRec.x = (int) truePos.x;
+      object.destRec.y = (int) truePos.y;
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: MoveGameObjectsTo a certain spot on the game screen
   private void MoveGameObjectsTo(SpriteSheet[] objects, Vector2F truePos, float x, float y)
   {
     //Set the true position to the given point
@@ -1129,13 +1324,16 @@ public class Main extends AbstractGame
     truePos.y = y;
 
     //Set all of the object's drawn positions to rounded down true position
-    for (int i = 0; i < objects.length; i++)
+    for (SpriteSheet object : objects)
     {
-      objects[i].destRec.x = (int) truePos.x;
-      objects[i].destRec.y = (int) truePos.y;
+      object.destRec.x = (int) truePos.x;
+      object.destRec.y = (int) truePos.y;
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Handle player collision with the ground and ceiling
   private void PlayerWallCollision()
   {
     //If the player hits the top/bottom walls, pull them in bounds and stop their vertical movement
@@ -1161,9 +1359,8 @@ public class Main extends AbstractGame
       //The player just landed on the ground
       grounded = true;
     }
-    else if (grounded == false)
+    else if (!grounded)
     {
-      ;
       //The player is off the ground, either jumping or falling
       playerState = JUMP;
       playerImg[RUN].StopAnimation();
@@ -1171,29 +1368,47 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: Objects array is valid
+  //Post: Return i value and no object
+  //Desc: Find inactive object using an array and for loop
   private int FindInactiveObject(SpriteSheet[] objects)
   {
+    // Loop through objects to find inactive objects
     for (int i = 0; i < objects.length; i++)
     {
+      // If objects at i aren't visible
       if (!objects[i].GetVisible())
       {
+        // Return object at i
         return i;
       }
     }
 
+    // Return no object
     return NO_OBJECT;
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Handle object intersection between player and objects
   private void ObjectsIntersect(SpriteSheet[] objects, int state, Vector2F[] position)
   {
+    // For the array objects length, work with intersection
     for (int i = 0; i < objects.length; i++)
     {
+      // If the object at i is visible
       if (objects[i].GetVisible())
       {
+        // If an intersection between the object and player state occurs
         if (Helper.Intersects(objects[i].destRec, playerImg[state].destRec))
         {
+          // Set object visibility to false
           objects[i].SetVisible(false);
+
+          // Reduce health by one
           health = health - 1;
+
+          // Reset object to a new place at edge of screen
           objects[i].destRec.x = windowWidth;
           objects[i].destRec.y = (int) Helper.RandomValue(50, 150);
           position[i].x = objects[i].destRec.x;
@@ -1203,15 +1418,24 @@ public class Main extends AbstractGame
     }
   }
 
-  private void ObjectsIntersectNoDamage(SpriteSheet[] objects, int state, Vector2F[] position)
+  //Pre: None
+  //Post: None
+  //Desc: Handle object intersection during invincibility power-up, no health is taken away
+  private void ObjectsIntersectNoDamage(SpriteSheet[] objects, Vector2F[] position)
   {
+    // For the array object length, work with intersection
     for (int i = 0; i < objects.length; i++)
     {
+      // If the objects at i is visible
       if (objects[i].GetVisible())
       {
-        if (Helper.Intersects(objects[i].destRec, playerImg[state].destRec))
+        // And intersection occurs between the object and player state occurs
+        if (Helper.Intersects(objects[i].destRec, playerImg[0].destRec))
         {
+          // Set object to transparent
           objects[i].SetVisible(false);
+
+          // Reset object to edge of screen
           objects[i].destRec.x = windowWidth;
           objects[i].destRec.y = (int) Helper.RandomValue(50, 150);
           position[i].x = objects[i].destRec.x;
@@ -1221,6 +1445,9 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Deactivate object at i from an array of objects
   private void DeactivateObject(SpriteSheet[] objects)
   {
     // Use for loop to deactivate the obstacles if it hits edge of screen
@@ -1236,18 +1463,22 @@ public class Main extends AbstractGame
           objects[i].SetVisible(false);
 
           // Award player 10 points
-          score = score + 10;
+          IncreaseBy(10);
 
+          // If objects at i is equal to toys at i
           if (objects[i] == toys[i])
           {
+            // Add one to the kill count
             toyKillCount = toyKillCount + 1;
-            System.out.println("Toy Kill Count = " + toyKillCount);
           }
         }
       }
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Move all game obstacles, power-ups and power-downs
   private void MoveObjects(SpriteSheet[] objects, Vector2F[] position, float speed)
   {
     // Use for loop to move toy obstacles
@@ -1263,11 +1494,17 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Spawn obstacles using spawn index and a random generated chance variable
   private void SpawnObjects()
   {
-    int spawnId = NO_OBJECT;
+    // Spawn index variable
+    int spawnId;
 
+    // Generate a new number between 4 and 6
     chance = (int) Helper.RandomValue(1, 4);
+
     // If the random number generated is 1, spawn a mosquito
     if (chance == MOSQUITO)
     {
@@ -1335,10 +1572,15 @@ public class Main extends AbstractGame
     }
   }
 
+  //Pre: None
+  //Post: None
+  //Desc: Spawn power-ups using a spawn index and a random generated chance variable
   private void SpawnPowerUps()
   {
-    int spawnId = NO_OBJECT;
+    // Spawn index variable
+    int spawnId;
 
+    // Generate a random variable from 4 to 6
     chance1 = (int) Helper.RandomValue(4, 7);
 
     // If the random number generated is 4, spawn a coffee
@@ -1350,15 +1592,15 @@ public class Main extends AbstractGame
       // If the spawn index is not -1, spawn coffee powerup
       if (spawnId != NO_OBJECT)
       {
+        // Set coffee visibility to true
         coffee[spawnId].SetVisible(true);
+
+        // Move coffee to edge of the screen
         coffee[spawnId].destRec.x = 850;
         coffee[spawnId].destRec.y = 50;
         coffeePos[spawnId].x = mosquitos[spawnId].destRec.x;
         coffeePos[spawnId].y = mosquitos[spawnId].destRec.y;
-      }
-      else
-      {
-        System.out.println("No more inactive objects left : coffee");
+        IncreaseBy(10);
       }
     }
 
@@ -1371,15 +1613,14 @@ public class Main extends AbstractGame
       // If the spawn index is not -1 and score is greater than 50, spawn pizza power-down
       if (spawnId != NO_OBJECT && score >= 50)
       {
+        // Set visibility to true
         pizza[spawnId].SetVisible(true);
+
+        // Move pizza object
         pizza[spawnId].destRec.x = 850;
         pizza[spawnId].destRec.y = 50;
         pizzaPos[spawnId].x = pizza[spawnId].destRec.x;
         pizzaPos[spawnId].y = pizza[spawnId].destRec.y;
-      }
-      else
-      {
-        System.out.println("No more inactive objects left : pizza");
       }
     }
 
@@ -1390,18 +1631,33 @@ public class Main extends AbstractGame
       spawnId = FindInactiveObject(water);
 
       // If the spawn index is not -1, spawn water power-up
-      if (spawnId != NO_OBJECT)
+      if (spawnId != NO_OBJECT && health < 3)
       {
+        // Set visibility to true
         water[spawnId].SetVisible(true);
+
+        // Move water object to edge of screen
         water[spawnId].destRec.x = 850;
         water[spawnId].destRec.y = 50;
         waterPos[spawnId].x = water[spawnId].destRec.x;
         waterPos[spawnId].y = water[spawnId].destRec.y;
       }
-      else
-      {
-        System.out.println("No more inactive objects left : water");
-      }
+    }
+  }
+
+  //Pre: None
+  //Post: None
+  //Desc: Method to quickly and efficiently increase the score by needed number
+  private void IncreaseBy(int increase)
+  {
+    // Increase score by increase number
+    score = score + increase;
+
+    // If the score is greater than high score
+    if (score > highScore)
+    {
+      // High score equals to score
+      highScore = score;
     }
   }
 }
